@@ -9,6 +9,8 @@ verify_ssl = true
 aiohttp = "*"
 pytest = "*"
 aioresponses = "*"
+webargs = "*"
+uvloop = "*"
 
 [requires]
 python_version = "3.6"
