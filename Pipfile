@@ -11,6 +11,9 @@ pytest = "*"
 aioresponses = "*"
 webargs = "*"
 uvloop = "*"
+pyyaml = "*"
+asyncpg = "*"
+asyncpgsa = "*"
 
 [requires]
 python_version = "3.6"
