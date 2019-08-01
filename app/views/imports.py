@@ -50,7 +50,7 @@ def check_relatives(relatives: dict):
     return True
 
 @use_args(citizens_list_args)
-async def imports(request, args):
+async def recieve_import_data(request, args):
     relatives = {}
     citizens_list = args['citizens'] 
     for citizen in citizens_list:
