@@ -3,7 +3,7 @@ from .routes import setup_routes
 import asyncpgsa
 
 def create_app(config: dict):
-    app = web.Application()
+    app = web.Application(client_max_size=1024**3)
     app['config'] = config
     setup_routes(app)
     app.on_startup.append(on_start)
