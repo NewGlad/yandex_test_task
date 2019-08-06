@@ -25,24 +25,29 @@ def samples_list():
     return samples_path_list
 
 
-@pytest.fixture(scope='session', autouse=True)
-def db():
+@pytest.fixture
+def one_citizen_sample():
+    sample = Path(__file__).parent / 'test_samples/samples/sample_1.json'
+    return sample
+
+@pytest.fixture
+def largest_sample():
+    sample = Path(__file__).parent / 'test_samples/samples/sample_10000.json'
+    return sample
+
+
+@pytest.fixture(autouse=True)
+async def db():
     """
     Фикстура для очистки данных в БД между запусками тестов
     """
-    async def _prepare():
-        connection = await connect(test_config_dict['database_uri'])
+    connection = await connect(test_config_dict['database_uri'])
+    await connection.execute("""
+        ALTER SEQUENCE citizen_info_import_id_seq RESTART WITH 1;
+        TRUNCATE TABLE citizen_info CASCADE;
+        TRUNCATE TABLE citizen_relation CASCADE;
+    """)
 
-        await connection.execute("""
-            ALTER SEQUENCE citizen_info_import_id_seq RESTART WITH 1;
-            TRUNCATE TABLE citizen_info CASCADE;
-            TRUNCATE TABLE citizen_relation CASCADE;
-        """)
-
-        await connection.close()
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_prepare())
 
 
 @pytest.fixture
