@@ -1,14 +1,48 @@
 import asyncio
 import logging
 from subprocess import PIPE, Popen
-
+import yaml
 import pytest
 from aioresponses import aioresponses
-from app import create_app
+from app.app import create_app
+from pathlib import Path
+from asyncpg import connect
+import os
 
 logger = logging.getLogger('conftest')
-
 pytest_plugins = 'aiohttp.pytest_plugin'
+
+
+file_path = Path(__file__).parent / 'test_config.yaml'
+with open(file_path, 'r') as config_file:
+    test_config_dict = yaml.safe_load(config_file)
+
+
+@pytest.fixture
+def samples_list():
+    samples_dir = Path(__file__).parent / 'test_samples/samples/'
+    samples_path_list =  [os.path.join(samples_dir, item) for item in os.listdir(samples_dir) if item.endswith('.json')]
+    return samples_path_list
+
+
+@pytest.fixture(scope='session', autouse=True)
+def db():
+    """
+    Фикстура для очистки данных в БД между запусками тестов
+    """
+    async def _prepare():
+        connection = await connect(test_config_dict['database_uri'])
+
+        await connection.execute("""
+            ALTER SEQUENCE citizen_info_import_id_seq RESTART WITH 1;
+            TRUNCATE TABLE citizen_info CASCADE;
+            TRUNCATE TABLE citizen_relation CASCADE;
+        """)
+
+        await connection.close()
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_prepare())
 
 
 @pytest.fixture
@@ -16,7 +50,8 @@ def test_cli(loop, aiohttp_client):
     """
     Базовая фикстура для старта приложения и получения aiohttp-клиента
     """
-    return loop.run_until_complete(aiohttp_client(create_app()))
+    application = create_app(config=test_config_dict)
+    return loop.run_until_complete(aiohttp_client(application))
 
 
 @pytest.fixture(autouse=True)
