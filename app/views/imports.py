@@ -8,7 +8,7 @@ from functools import partial
 import json
 import asyncpg
 
-
+INVALID_REQUEST_CODE = 400
 DATE_FORMAT = '%d.%m.%Y'
 VALID_GENDER_LIST = ["male", "female"]
 
@@ -56,7 +56,7 @@ def check_relatives(relatives: dict):
                 return False
     return True
 
-@use_args(recieve_import_data_args)
+@use_args(recieve_import_data_args, error_status_code=INVALID_REQUEST_CODE)
 async def recieve_import_data(request, args):
     relatives = {}
     citizens_list = args['citizens'] 
@@ -65,7 +65,7 @@ async def recieve_import_data(request, args):
     
     relatives_is_correct = check_relatives(relatives)
     if not relatives_is_correct:
-        return web.Response(status=400, text='Relatives between citizens is not correct')
+        return web.Response(status=INVALID_REQUEST_CODE, text='Relatives between citizens is not correct')
     town, street, building, apartment, name, birth_date, gender, citizen_id = zip(
         *[
             (
@@ -83,7 +83,6 @@ async def recieve_import_data(request, args):
     )
     
     data = [town, street, building, apartment, name, birth_date, gender, citizen_id]
-    
     async with request.app['db'].acquire() as connection:
         async with connection.transaction():
             result = await connection.fetch('''
@@ -93,6 +92,7 @@ async def recieve_import_data(request, args):
             current_import_id = result[0][0]
             relatives_data = []
             for citizen_id, relatives_list in relatives.items():
+                relatives_list = list(set(relatives_list)) # удаление возможных дубликатов
                 for relative_id in relatives_list:
                     relatives_data.append(
                         (citizen_id, current_import_id, relative_id)
@@ -101,7 +101,6 @@ async def recieve_import_data(request, args):
             await connection.copy_records_to_table(
                 'citizen_relation', records=relatives_data)
 
-    
     response = {
         'data': {
             'import_id': current_import_id
@@ -128,10 +127,10 @@ update_citizen_info_args = {
     )
 }
 
-@use_args(update_citizen_info_args)
+@use_args(update_citizen_info_args, error_status_code=INVALID_REQUEST_CODE)
 async def update_citizen_info(request, args):
     if len(args) == 0:
-        return web.Response(status=400, text='Empty data to update')
+        return web.Response(status=INVALID_REQUEST_CODE, text='Empty data to update')
 
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
@@ -149,7 +148,7 @@ async def update_citizen_info(request, args):
                 citizen_info = dict(result[0])
             except IndexError:
                 # В случае, если result это пустой список, т.е. ничего не нашлось в базе
-                return web.Response(status=400, text='Invalid import_id or citizen_id')
+                return web.Response(status=INVALID_REQUEST_CODE, text='Invalid import_id or citizen_id')
 
             updated_citizen_info = {**citizen_info, **args}
             await connection.execute('''
@@ -177,6 +176,7 @@ async def update_citizen_info(request, args):
             
                 #  citizen_id | import_id | relation_id
                 new_relatives_data = []
+                relatives = list(set(relatives)) # удаляем возможные дубликаты
                 for relative_id in relatives:
                     new_relatives_data.append((citizen_id, import_id, relative_id))
                     if relative_id != citizen_id:
@@ -186,7 +186,7 @@ async def update_citizen_info(request, args):
                 try:
                     await connection.copy_records_to_table('citizen_relation', records=new_relatives_data)
                 except asyncpg.exceptions.ForeignKeyViolationError:
-                    return web.Response(status=400, text='Invalid relatives list')
+                    return web.Response(status=INVALID_REQUEST_CODE, text='Invalid relatives list')
 
             # получаем актуальный список родственников
             relatives = await connection.fetch('''
@@ -194,7 +194,11 @@ async def update_citizen_info(request, args):
             ''', import_id, citizen_id)
             updated_citizen_info['relatives'] = [item[0] for item in relatives]
 
-    return web.json_response(updated_citizen_info)
+    response = {
+        'data': updated_citizen_info
+    }
+
+    return web.json_response(response)
 
 
 async def get_all_citizens(request):
@@ -205,7 +209,7 @@ async def get_all_citizens(request):
         FROM citizen_info WHERE import_id = $1;
         ''', import_id)
         if len(result) == 0:
-            return web.Response(status=400, text='Import with given id does not exist')
+            return web.Response(status=INVALID_REQUEST_CODE, text='Import with given id does not exist')
 
         result = [dict(result_item) for result_item in result]
 
@@ -222,5 +226,8 @@ async def get_all_citizens(request):
             relatives_list = relatives_dict.get(citizen_id, [])
             citizen_info_dict['relatives'] = relatives_list
 
+        response = {
+            'data': result
+        }
 
-    return web.json_response(result)
+    return web.json_response(response)
