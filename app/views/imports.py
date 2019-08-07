@@ -60,6 +60,9 @@ def check_relatives(relatives: dict):
 async def recieve_import_data(request, args):
     relatives = {}
     citizens_list = args['citizens'] 
+    if len(citizens_list) == 0:
+        return web.json_response(text='List of citizens cannot be empty!', status=INVALID_REQUEST_CODE)
+
     for citizen in citizens_list:
         relatives[int(citizen['citizen_id'])] = citizen['relatives']
     
