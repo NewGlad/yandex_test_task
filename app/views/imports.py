@@ -100,7 +100,7 @@ async def recieve_import_data(request, args):
                     relatives_data.append(
                         (citizen_id, current_import_id, relative_id)
                     )
-            
+
             await connection.copy_records_to_table(
                 'citizen_relation', records=relatives_data)
 
@@ -186,10 +186,8 @@ async def update_citizen_info(request, args):
                         # Добавим обратную связь, если id отличаются,
                         # иначе связь человека самим с собой добавилась бы два раза
                         new_relatives_data.append((relative_id, import_id, citizen_id))    
-                try:
-                    await connection.copy_records_to_table('citizen_relation', records=new_relatives_data)
-                except asyncpg.exceptions.ForeignKeyViolationError:
-                    return web.Response(status=INVALID_REQUEST_CODE, text='Invalid relatives list')
+                
+                await connection.copy_records_to_table('citizen_relation', records=new_relatives_data)
 
             # получаем актуальный список родственников
             relatives = await connection.fetch('''
