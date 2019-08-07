@@ -25,13 +25,31 @@ async def test_upload_import_(test_cli, samples_list):
 
 
 async def test_upload_missing_data(test_cli):
+    '''
+        Обращение к обработчику без данных, проверка статуса 400
+    '''
     #Если не задаем данные вообще
     response = await test_cli.post('/imports')
     assert response.status == 400
 
     #Если задаем пустой список
-    # response = await test_cli.post('/imports', json={'citizens': []})
-    # assert response.status == 400
+    response = await test_cli.post('/imports', json={'citizens': []})
+    assert response.status == 400
+    response_text = await response.text()
+    assert response_text == 'List of citizens cannot be empty!'
+
+
+async def test_upload_import_incorrect_relatives(test_cli, one_citizen_sample):
+    '''
+        Загрузка данных с неправильным списком родственников, проверка статуса 400
+    '''
+    with open(one_citizen_sample, 'r') as f:
+            sample_json = json.load(f)
+    citizen = sample_json['citizens'][0]
+    citizen['relatives'].append(123)
+    response = await test_cli.post('/imports', json=sample_json)
+    assert response.status == 400
+
 
 
 async def test_upload_import_missing_field(test_cli, one_citizen_sample):
@@ -49,7 +67,7 @@ async def test_upload_import_missing_field(test_cli, one_citizen_sample):
         assert response.status == 400
 
 
-async def test_import_consistency(test_cli, samples_list):
+async def test_download_consistency(test_cli, samples_list):
     '''
         Загрузка данных, проверка эквивалентности загруженного и возвращенного из сервиса 
     '''
@@ -74,6 +92,16 @@ async def test_import_consistency(test_cli, samples_list):
         get_response_content.sort(key=lambda value: value['citizen_id'])
         assert get_response_content == sample_json['citizens']
 
+
+async def test_download_invalid_import_id(test_cli, samples_list):
+    '''
+        Обращение к сервису с несуществующим import_id, проверка статуса 400
+    '''
+    get_response = await test_cli.get('/imports/123/citizens')
+    assert get_response.status == 400
+    get_response_text = await get_response.text()
+    assert get_response_text == 'Import with given id does not exist'
+    
 
 
 async def test_patch(test_cli, samples_list):
@@ -157,6 +185,8 @@ async def test_patch_missing_field(test_cli, one_citizen_sample):
     patch_response = await test_cli.patch(f'/imports/{import_id}/citizens/{citizen_id}', json=empty_patch_request)
 
     assert patch_response.status == 400
+    patch_response_text = await patch_response.text()
+    assert patch_response_text == 'Empty data to update'
 
 
 async def test_patch_wrong_url(test_cli, one_citizen_sample):
