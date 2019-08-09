@@ -3,8 +3,7 @@ from aiohttp import web
 from datetime import datetime, date, timedelta
 import numpy as np
 from collections import defaultdict
-DATE_FORMAT = '%d.%m.%Y'
-INVALID_REQUEST_CODE = 400
+
 
 async def count_percentile(request):
     import_id = int(request.match_info['import_id'])
@@ -13,7 +12,7 @@ async def count_percentile(request):
         SELECT count(*) FROM citizen_info WHERE import_id = $1;
         ''', import_id)
         if count_recors[0][0] == 0:
-            return web.Response(status=INVALID_REQUEST_CODE, text='Import with given import_id does not exist')
+            return web.Response(status=request.app['config']['invalid_request_http_code'], text='Import with given import_id does not exist')
         
         result = await connection.fetch('''
         SELECT town, birth_date FROM citizen_info 
@@ -23,7 +22,7 @@ async def count_percentile(request):
     ages_in_town = defaultdict(list)
     for item in result:
         town = item['town']
-        birth_date = datetime.strptime(item['birth_date'], DATE_FORMAT).date()
+        birth_date = datetime.strptime(item['birth_date'], request.app['config']['birth_date_format']).date()
         
         age = (date.today() - birth_date) // timedelta(days=365.2425)
         ages_in_town[town].append(age)

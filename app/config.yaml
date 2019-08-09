@@ -1,2 +1,3 @@
-site_name: 'Yandex REST'
 database_uri: postgresql://postgres:postgres@localhost:5432/rest_db
+birth_date_format: "%d.%m.%Y"
+invalid_request_http_code: 400

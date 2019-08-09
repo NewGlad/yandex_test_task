@@ -1,8 +1,7 @@
 from datetime import datetime
 import collections
 from aiohttp import web
-DATE_FORMAT = '%d.%m.%Y'
-INVALID_REQUEST_CODE = 400
+
 
 async def count_birthdays(request):
     import_id = int(request.match_info['import_id'])
@@ -10,8 +9,12 @@ async def count_birthdays(request):
         count_recors = await connection.fetch('''
         SELECT count(*) FROM citizen_info WHERE import_id = $1;
         ''', import_id)
+
         if count_recors[0][0] == 0:
-            return web.Response(status=INVALID_REQUEST_CODE, text='Import with given import_id does not exist')
+            return web.Response(
+                status=request.app['config']['invalid_request_http_code'],
+                text='Import with given import_id does not exist'
+            )
 
         result = await connection.fetch('''
             WITH relatives_ids AS (
@@ -30,7 +33,7 @@ async def count_birthdays(request):
         for item in result:
             citizen_id = item['citizen_id']
             birth_date = item['birth_date']
-            month = str(datetime.strptime(birth_date, DATE_FORMAT).month)
+            month = str(datetime.strptime(birth_date, request.app['config']['birth_date_format']).month)
             response[month].append(citizen_id)
         
         for month, month_array in response.items():

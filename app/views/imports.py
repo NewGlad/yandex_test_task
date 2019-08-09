@@ -8,8 +8,6 @@ from functools import partial
 import json
 import asyncpg
 
-INVALID_REQUEST_CODE = 400
-DATE_FORMAT = '%d.%m.%Y'
 VALID_GENDER_LIST = ["male", "female"]
 
 
@@ -28,7 +26,7 @@ citizen_info = {
     "apartment": fields.Int(required=True),
     "name": fields.Str(required=True),
     "birth_date": fields.Str(
-        validate=partial(check_valid_date, date_format=DATE_FORMAT),
+        validate=partial(check_valid_date, date_format=r'%d.%m.%Y'),
         required=True
         ),
     "gender": fields.Str(
@@ -56,19 +54,29 @@ def check_relatives(relatives: dict):
                 return False
     return True
 
-@use_args(recieve_import_data_args, error_status_code=INVALID_REQUEST_CODE)
+@use_args(
+    recieve_import_data_args,
+    error_status_code=400 #TODO
+)
 async def recieve_import_data(request, args):
     relatives = {}
     citizens_list = args['citizens'] 
     if len(citizens_list) == 0:
-        return web.json_response(text='List of citizens cannot be empty!', status=INVALID_REQUEST_CODE)
+        return web.json_response(
+            text='List of citizens cannot be empty!',
+            status=request.app['config']['invalid_request_http_code']
+        )
 
     for citizen in citizens_list:
         relatives[int(citizen['citizen_id'])] = citizen['relatives']
     
     relatives_is_correct = check_relatives(relatives)
     if not relatives_is_correct:
-        return web.Response(status=INVALID_REQUEST_CODE, text='Relatives between citizens is not correct')
+        return web.Response(
+            status=request.app['config']['invalid_request_http_code'],
+            text='Relatives between citizens is not correct'
+        )
+
     town, street, building, apartment, name, birth_date, gender, citizen_id = zip(
         *[
             (
@@ -92,6 +100,7 @@ async def recieve_import_data(request, args):
                 SELECT insert_import_data_to_citizen_info($1, $2, $3, $4, $5, $6, $7, $8);
                 ''', *data
             )
+
             current_import_id = result[0][0]
             relatives_data = []
             for citizen_id, relatives_list in relatives.items():
@@ -120,7 +129,7 @@ update_citizen_info_args = {
     "apartment": fields.Int(),
     "name": fields.Str(),
     "birth_date": fields.Str(
-        validate=partial(check_valid_date, date_format=DATE_FORMAT)
+        validate=partial(check_valid_date, date_format=r'%d.%m.%Y')
         ),
     "gender": fields.Str(
         validate=validate.OneOf(VALID_GENDER_LIST)
@@ -130,10 +139,10 @@ update_citizen_info_args = {
     )
 }
 
-@use_args(update_citizen_info_args, error_status_code=INVALID_REQUEST_CODE)
+@use_args(update_citizen_info_args, error_status_code=400) #TODO
 async def update_citizen_info(request, args):
     if len(args) == 0:
-        return web.Response(status=INVALID_REQUEST_CODE, text='Empty data to update')
+        return web.Response(status=request.app['config']['invalid_request_http_code'], text='Empty data to update')
 
     import_id = int(request.match_info['import_id'])
     citizen_id = int(request.match_info['citizen_id'])
@@ -151,7 +160,7 @@ async def update_citizen_info(request, args):
                 citizen_info = dict(result[0])
             except IndexError:
                 # В случае, если result это пустой список, т.е. ничего не нашлось в базе
-                return web.Response(status=INVALID_REQUEST_CODE, text='Invalid import_id or citizen_id')
+                return web.Response(status=request.app['config']['invalid_request_http_code'], text='Invalid import_id or citizen_id')
 
             updated_citizen_info = {**citizen_info, **args}
             await connection.execute('''
@@ -210,7 +219,7 @@ async def get_all_citizens(request):
         FROM citizen_info WHERE import_id = $1;
         ''', import_id)
         if len(result) == 0:
-            return web.Response(status=INVALID_REQUEST_CODE, text='Import with given id does not exist')
+            return web.Response(status=request.app['config']['invalid_request_http_code'], text='Import with given id does not exist')
 
         result = [dict(result_item) for result_item in result]
 

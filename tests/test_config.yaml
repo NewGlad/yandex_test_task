@@ -1,2 +1,1 @@
-site_name: 'Yandex REST testing'
 database_uri: postgresql://postgres:postgres@localhost:5432/rest_db_test

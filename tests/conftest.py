@@ -5,6 +5,7 @@ import yaml
 import pytest
 from aioresponses import aioresponses
 from app.app import create_app
+from app.settings import load_config
 from pathlib import Path
 from asyncpg import connect
 import os
@@ -15,7 +16,7 @@ pytest_plugins = 'aiohttp.pytest_plugin'
 
 file_path = Path(__file__).parent / 'test_config.yaml'
 with open(file_path, 'r') as config_file:
-    test_config_dict = yaml.safe_load(config_file)
+    test_config_dict = load_config(config_file)
 
 
 @pytest.fixture
