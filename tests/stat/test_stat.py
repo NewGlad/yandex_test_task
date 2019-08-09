@@ -2,21 +2,17 @@ import json
 from collections import defaultdict
 from datetime import date, timedelta, datetime
 import numpy as np
+from tests.utils import upload_json_file
+
+
 DATE_FORMAT = '%d.%m.%Y'
 INVALID_REQUEST_CODE = 400
 
 
 
 async def test_stat_counting(test_cli, samples_list):
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
-
-        response = await test_cli.post('/imports', json=sample_json)
-        assert response.status == 201
-        response_json = await response.json()
-        import_id = response_json['data']['import_id']
-        
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
 
         age_by_town = defaultdict(list)
         for citizen_dict in sample_json['citizens']:
@@ -51,18 +47,10 @@ async def test_stat_counting(test_cli, samples_list):
 
 
 async def test_stat_invalid_import_id(test_cli, samples_list):
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
-
-        response = await test_cli.post('/imports', json=sample_json)
-        assert response.status == 201
-        response_json = await response.json()
-        import_id = response_json['data']['import_id']
-        
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
 
         response = await test_cli.get('/imports/123/towns/stat/percentile/age', json=sample_json)
-        
 
         assert response.status == 400
         response_text = await response.text()

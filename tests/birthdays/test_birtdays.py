@@ -1,20 +1,15 @@
 import json
 from datetime import datetime
 import collections
-DATE_FORMAT = '%d.%m.%Y'
+from tests.utils import upload_json_file
 
+DATE_FORMAT = '%d.%m.%Y'
 async def test_birthdays_count(test_cli, samples_list):
     '''
         Загрузка данных, проверка корректности подсчёта подарков
     '''
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
-
-        response = await test_cli.post('/imports', json=sample_json)
-        assert response.status == 201
-        response_json = await response.json()
-        import_id = response_json['data']['import_id']
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
 
         citizen_by_month = {str(month): [] for month in range(1, 12 + 1)}
         for citizen_dict in sample_json['citizens']:
@@ -53,9 +48,8 @@ async def test_birthdays_count(test_cli, samples_list):
     '''
         Загрузка данных, проверка корректности подсчёта подарков
     '''
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
 
         response = await test_cli.post('/imports', json=sample_json)
         assert response.status == 201
@@ -98,14 +92,8 @@ async def test_birthdays_count_invalid_import_id(test_cli, one_citizen_sample):
     '''
         Проверка кода 400 при несуществующем import_id
     '''
-    
-    with open(one_citizen_sample, 'r') as f:
-        sample_json = json.load(f)
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
 
-    response = await test_cli.post('/imports', json=sample_json)
-    assert response.status == 201
-    response_json = await response.json()
-    import_id = response_json['data']['import_id']
 
     response = await test_cli.get(f'/imports/123/citizens/birthdays')
     

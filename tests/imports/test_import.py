@@ -2,26 +2,15 @@ import json
 import os
 import random
 import copy
+from tests.utils import upload_json_file
 
-
-async def test_upload_import_(test_cli, samples_list):
+async def test_upload_import(test_cli, samples_list):
     '''
         Загрузка данных, проверка полученного import_id
     '''
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
-
-        response = await test_cli.post('/imports', json=sample_json)
-        assert response.status == 201
-        expected_result = {
-            "data": {
-                "import_id": import_id
-            }
-        }
-        response_json = await response.json()
-        assert response_json == expected_result
-
+    for expected_import_id, sample_path in enumerate(samples_list, 1):
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
+        assert import_id == expected_import_id
 
 
 async def test_upload_missing_data(test_cli):
@@ -43,8 +32,8 @@ async def test_upload_import_incorrect_relatives(test_cli, one_citizen_sample):
     '''
         Загрузка данных с неправильным списком родственников, проверка статуса 400
     '''
-    with open(one_citizen_sample, 'r') as f:
-            sample_json = json.load(f)
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
+
     citizen = sample_json['citizens'][0]
     citizen['relatives'].append(123)
     response = await test_cli.post('/imports', json=sample_json)
@@ -56,8 +45,7 @@ async def test_upload_import_missing_field(test_cli, one_citizen_sample):
     '''
         Загрузка данных с пропущенными полями, проверка статуса 400
     '''
-    with open(one_citizen_sample, 'r') as f:
-            sample_json = json.load(f)
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
     citizen = sample_json['citizens'][0]
     for key in citizen.keys():
         broken_citizen = copy.deepcopy(citizen)
@@ -71,14 +59,8 @@ async def test_download_consistency(test_cli, samples_list):
     '''
         Загрузка данных, проверка эквивалентности загруженного и возвращенного из сервиса 
     '''
-    for import_id, sample_path in enumerate(samples_list, 1):
-        with open(sample_path, 'r') as f:
-            sample_json = json.load(f)
-        
-        upload_response = await test_cli.post('/imports', json=sample_json)
-        assert upload_response.status == 201
-        upload_response_json = await upload_response.json()
-        import_id = upload_response_json['data']['import_id']
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
         
         get_response = await test_cli.get(f'/imports/{import_id}/citizens')
         get_response_json = await get_response.json()
@@ -108,14 +90,8 @@ async def test_patch(test_cli, samples_list):
     '''
         Загрузка данных, изменение случайных полей на случайные значения, проверка
     '''
-    for sample in samples_list:
-        with open(sample, 'r') as f:
-            sample_json = json.load(f)
-            
-        upload_response = await test_cli.post('/imports', json=sample_json)
-        assert upload_response.status == 201
-        upload_response_json = await upload_response.json()
-        import_id = upload_response_json['data']['import_id']
+    for sample_path in samples_list:
+        sample_json, import_id = await upload_json_file(sample_path, test_cli)
         
         import datetime
         import numpy as np
@@ -172,13 +148,8 @@ async def test_patch_missing_field(test_cli, one_citizen_sample):
     '''
         Запрос на изменение с пустым телом, проверка статуса 400
     '''
-    with open(one_citizen_sample, 'r') as f:
-            sample_json = json.load(f)
-    upload_response = await test_cli.post('/imports', json=sample_json)
-    assert upload_response.status == 201
-    upload_response_json = await upload_response.json()
     
-    import_id = upload_response_json['data']['import_id']
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
     citizen_id = sample_json['citizens'][0]['citizen_id']
     empty_patch_request = {}
 
@@ -193,19 +164,12 @@ async def test_patch_wrong_url(test_cli, one_citizen_sample):
     '''
         Запрос на изменение с несуществующими import_id или citizen_id, проверка статуса 400
     '''
-    with open(one_citizen_sample, 'r') as f:
-            sample_json = json.load(f)
-    upload_response = await test_cli.post('/imports', json=sample_json)
-    assert upload_response.status == 201
-    upload_response_json = await upload_response.json()
     
-    import_id = upload_response_json['data']['import_id']
-    citizen_id = sample_json['citizens'][0]['citizen_id']
-    empty_patch_request = {}
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
 
     # неправильный import_id
     patch_response = await test_cli.patch(f'/imports/{3}/citizens/{1}', json={'name': 'hello'})
-    assert patch_response.status == 400, await upload_response.text()
+    assert patch_response.status == 400
     assert await patch_response.text() == 'Invalid import_id or citizen_id'
 
     # неправильный citizen_id
