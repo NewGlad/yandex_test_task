@@ -57,8 +57,7 @@ async def recieve_import_data(request, args):
         async with connection.transaction():
             result = await connection.fetch('''
                 SELECT insert_import_data_to_citizen_info($1, $2, $3, $4, $5, $6, $7, $8);
-                ''', *data
-                                            )
+                ''', *data)
 
             current_import_id = result[0][0]
             relatives_data = []
