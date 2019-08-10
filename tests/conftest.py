@@ -22,7 +22,10 @@ with open(file_path, 'r') as config_file:
 @pytest.fixture
 def samples_list():
     samples_dir = Path(__file__).parent / 'test_samples/samples/'
-    samples_path_list =  [os.path.join(samples_dir, item) for item in os.listdir(samples_dir) if item.endswith('.json')]
+    samples_path_list = [
+        os.path.join(
+            samples_dir,
+            item) for item in os.listdir(samples_dir) if item.endswith('.json')]
     return samples_path_list
 
 
@@ -30,6 +33,7 @@ def samples_list():
 def one_citizen_sample():
     sample = Path(__file__).parent / 'test_samples/samples/sample_1.json'
     return sample
+
 
 @pytest.fixture
 def largest_sample():
@@ -48,7 +52,6 @@ async def db():
         TRUNCATE TABLE citizen_info CASCADE;
         TRUNCATE TABLE citizen_relation CASCADE;
     """)
-
 
 
 @pytest.fixture

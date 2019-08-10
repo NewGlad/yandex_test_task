@@ -23,20 +23,24 @@ async def count_birthdays(request):
                 ON t1.import_id = t2.import_id AND t1.citizen_id = t2.citizen_id
                 WHERE t1.import_id = $1
             )
-            
+
             SELECT relatives_ids.citizen_id, citizen_info.birth_date FROM relatives_ids
-            JOIN citizen_info 
+            JOIN citizen_info
             ON relatives_ids.relation_id = citizen_info.citizen_id AND relatives_ids.import_id = citizen_info.import_id;
             ''', import_id)
-        
+
         response = {str(month): [] for month in range(1, 12 + 1)}
         for item in result:
             citizen_id = item['citizen_id']
             birth_date = item['birth_date']
-            month = str(datetime.strptime(birth_date, request.app['config']['birth_date_format']).month)
+            month = str(
+                datetime.strptime(
+                    birth_date,
+                    request.app['config']['birth_date_format']).month)
             response[month].append(citizen_id)
-        
+
         for month, month_array in response.items():
-            response[month] = [{'citizen_id': citizen_id, 'presents': presents} for citizen_id, presents in collections.Counter(month_array).items()]
-        
+            response[month] = [{'citizen_id': citizen_id, 'presents': presents}
+                               for citizen_id, presents in collections.Counter(month_array).items()]
+
         return web.json_response({'data': response})

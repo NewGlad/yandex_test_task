@@ -1,6 +1,7 @@
 from collections import defaultdict
 from aiohttp import web
 
+
 async def get_all_citizens(request):
     import_id = int(request.match_info['import_id'])
     async with request.app['db'].acquire() as connection:
@@ -23,7 +24,7 @@ async def get_all_citizens(request):
         relatives_dict = defaultdict(list)
         for item in relatives:
             relatives_dict[item['citizen_id']].append(item['relation_id'])
-        
+
         for citizen_info_dict in result:
             citizen_id = citizen_info_dict['citizen_id']
             relatives_list = relatives_dict.get(citizen_id, [])

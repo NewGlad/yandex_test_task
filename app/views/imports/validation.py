@@ -15,7 +15,7 @@ citizen_info = {
     "birth_date": fields.Str(
         validate=partial(check_valid_date, date_format=config['birth_date_format']),
         required=True
-        ),
+    ),
     "gender": fields.Str(
         validate=validate.OneOf(config['valid_genders']),
         required=True
@@ -27,7 +27,7 @@ citizen_info = {
 }
 
 recieve_import_data_args = {
-    "citizens" : fields.List(
+    "citizens": fields.List(
         fields.Nested(citizen_info, required=True),
         required=True
     )
@@ -42,8 +42,8 @@ update_citizen_info_args = {
     "name": fields.Str(),
     "birth_date": fields.Str(
         validate=partial(check_valid_date,
-            date_format=config['birth_date_format']
-        )
+                         date_format=config['birth_date_format']
+                         )
     ),
     "gender": fields.Str(
         validate=validate.OneOf(config['valid_genders'])
