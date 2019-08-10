@@ -1,8 +1,9 @@
 import collections
 from aiohttp import web
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import numpy as np
 from collections import defaultdict
+from .utils import calculate_age
 
 
 async def count_percentile(request):
@@ -28,7 +29,7 @@ async def count_percentile(request):
             item['birth_date'],
             request.app['config']['birth_date_format']).date()
 
-        age = (date.today() - birth_date) // timedelta(days=365.2425)
+        age = calculate_age(birth_date)
         ages_in_town[town].append(age)
 
     required_percentiles = [50, 75, 99]

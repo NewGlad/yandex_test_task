@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, timedelta, datetime
 import numpy as np
 from tests.utils import upload_json_file
-
+from app.views.stat import utils
 
 DATE_FORMAT = '%d.%m.%Y'
 INVALID_REQUEST_CODE = 400
@@ -19,7 +19,7 @@ async def test_stat_counting(test_cli, samples_list):
 
             birth_date = datetime.strptime(
                 citizen_dict['birth_date'], DATE_FORMAT).date()
-            age = (date.today() - birth_date) // timedelta(days=365.2425)
+            age = utils.calculate_age(birth_date)
 
             age_by_town[town].append(age)
 
