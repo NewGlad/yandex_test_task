@@ -3,7 +3,7 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[dev-packages]
+[dev - packages]
 mypy = "*"
 
 [packages]
@@ -16,7 +16,8 @@ pyyaml = "*"
 asyncpg = "*"
 asyncpgsa = "*"
 numpy = "*"
-pytest-cov = "*"
+pytest - cov = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.6"
