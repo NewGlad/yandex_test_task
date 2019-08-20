@@ -18,6 +18,7 @@ asyncpgsa = "*"
 numpy = "*"
 pytest-cov = "*"
 autopep8 = "*"
+pdbpp = "*"
 
 [requires]
 python_version = "3.6"
