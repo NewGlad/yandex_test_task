@@ -14,7 +14,13 @@ def create_app(config: dict):
 
 async def on_start(app):
     config = app['config']
-    app['db'] = await asyncpgsa.create_pool(dsn=config['database_uri']) #TODO: set maximum conenction amount
+    app['db'] = await asyncpgsa.create_pool(
+        dsn=config['database_uri'],
+        min_size=config['database_connection_amount'],
+        max_size=config['database_connection_amount'],
+        max_inactive_connection_lifetime=0
+
+    )
 
 
 async def on_shutdown(app):

@@ -1,6 +1,8 @@
 database_uri: postgresql://postgres:postgres@localhost:5432/rest_db
+database_connection_amount: 100
 birth_date_format: "%d.%m.%Y"
 invalid_request_http_code: 400
 valid_genders:
   - male
   - female
+
