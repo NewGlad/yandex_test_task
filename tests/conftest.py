@@ -1,14 +1,12 @@
-import asyncio
 import logging
-from subprocess import PIPE, Popen
-import yaml
+import os
+from pathlib import Path
+from asyncpg import connect
 import pytest
 from aioresponses import aioresponses
 from app.app import create_app
 from app.settings import load_config
-from pathlib import Path
-from asyncpg import connect
-import os
+
 
 logger = logging.getLogger('conftest')
 pytest_plugins = 'aiohttp.pytest_plugin'

@@ -1,6 +1,6 @@
+import asyncpgsa
 from aiohttp import web
 from .routes import setup_routes
-import asyncpgsa
 
 
 def create_app(config: dict):
