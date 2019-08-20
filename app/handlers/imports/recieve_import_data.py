@@ -1,8 +1,8 @@
 from aiohttp import web
 from webargs.aiohttpparser import use_args
-from app.views.config import config
-from app.views.imports.utils import check_relatives
-from app.views.imports.validation import recieve_import_data_args
+from app.handlers.config import config
+from app.handlers.imports.utils import check_relatives
+from app.handlers.imports.validation import recieve_import_data_args
 
 
 @use_args(

@@ -1,4 +1,4 @@
-from app.views import imports, birthdays, stat
+from app.handlers import imports, birthdays, stat
 
 
 def setup_routes(app):

@@ -3,7 +3,7 @@ from webargs import fields
 from webargs.aiohttpparser import parser, use_args
 from marshmallow import Schema, validate
 from .utils import check_valid_date
-from app.views.config import config
+from app.handlers.config import config
 
 citizen_info = {
     "citizen_id": fields.Int(required=True),

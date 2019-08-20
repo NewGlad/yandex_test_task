@@ -1,7 +1,7 @@
 from aiohttp import web
 from webargs.aiohttpparser import use_args
-from app.views.imports.validation import update_citizen_info_args
-from app.views.config import config
+from app.handlers.imports.validation import update_citizen_info_args
+from app.handlers.config import config
 
 
 @use_args(update_citizen_info_args,

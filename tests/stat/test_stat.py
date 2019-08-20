@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, timedelta, datetime
 import numpy as np
 from tests.utils import upload_json_file
-from app.views.stat import utils
+from app.handlers.stat import utils
 
 DATE_FORMAT = '%d.%m.%Y'
 INVALID_REQUEST_CODE = 400
