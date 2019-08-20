@@ -19,6 +19,7 @@ numpy = "*"
 pytest-cov = "*"
 autopep8 = "*"
 pdbpp = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.6"
