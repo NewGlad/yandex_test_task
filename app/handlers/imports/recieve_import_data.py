@@ -55,11 +55,11 @@ async def recieve_import_data(request, args):
         citizen_id]
     async with request.app['db'].acquire() as connection:
         async with connection.transaction():
-            result = await connection.fetch('''
+            result = await connection.fetchval('''
                 SELECT insert_import_data_to_citizen_info($1, $2, $3, $4, $5, $6, $7, $8);
                 ''', *data)
 
-            current_import_id = result[0][0]
+            current_import_id = result
             relatives_data = []
             for citizen_id, relatives_list in relatives.items():
                 # удаление возможных дубликатов

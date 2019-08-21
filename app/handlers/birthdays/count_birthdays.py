@@ -6,11 +6,11 @@ from aiohttp import web
 async def count_birthdays(request):
     import_id = int(request.match_info['import_id'])
     async with request.app['db'].acquire() as connection:
-        count_recors = await connection.fetch('''
+        count_recors = await connection.fetchval('''
         SELECT count(*) FROM citizen_info WHERE import_id = $1;
         ''', import_id)
 
-        if count_recors[0][0] == 0:
+        if count_recors == 0:
             return web.Response(
                 status=request.app['config']['invalid_request_http_code'],
                 text='Import with given import_id does not exist'
