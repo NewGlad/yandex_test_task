@@ -49,20 +49,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+CREATE index ON citizen_info(import_id);
+
 COMMIT;
- /*
-ТЕСТОВЫЕ ЗАПРОСЫ
-
- SELECT insert_import_data_to_citizen_info('{Пермь}', '{Ул. Борчанинова}', '{д.6}', '{квартира 61}', '{Алексей Никитин}',
- '{18.06.1997}', '{male}', '{17}'
- );
- 
-
-INSERT INTO citizen_info (town,
-street, building, apartment, citizen_name, birth_date, gender, citizen_id, import_id)
-VALUES ('Москва', 'Пушкина', 'Колотушкина', '1', 'Иванов', '11.1.2019', 'male', 1, 1);
-
-
-INSERT INTO citizen_relation (relation_id, citizen_id, import_id) VALUES (1,1,1);
-*/
-
