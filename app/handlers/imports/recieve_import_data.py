@@ -1,4 +1,5 @@
 from aiohttp import web
+from asyncpg.exceptions import UniqueViolationError
 from webargs.aiohttpparser import use_args
 from app.handlers.config import config
 from app.handlers.imports.utils import check_relatives
@@ -43,6 +44,19 @@ async def recieve_import_data(request, args):
             for item in citizens_list
         ]
     )
+    citizen_ids_set = set(citizen_id)
+    relatives_ids_set = set()
+    for relatives_list in relatives.values():
+        relatives_ids_set.union(set(relatives_list))
+    
+    
+    all_citizen_ids_unique = len(list(citizen_ids_set)) == len(citizen_id)
+    all_relatives_ids_in_citizen_ids_set = citizen_ids_set.issuperset(relatives_ids_set)
+    if not (all_citizen_ids_unique and all_relatives_ids_in_citizen_ids_set):
+        return web.Response(
+            status=request.app['config']['invalid_request_http_code'],
+            text='Citizen identifiers invalid'
+        )
 
     data = [
         town,
@@ -53,6 +67,7 @@ async def recieve_import_data(request, args):
         birth_date,
         gender,
         citizen_id]
+
     async with request.app['db'].acquire() as connection:
         async with connection.transaction():
             result = await connection.fetchval('''
@@ -71,6 +86,7 @@ async def recieve_import_data(request, args):
 
             await connection.copy_records_to_table(
                 'citizen_relation', records=relatives_data)
+
 
     response = {
         'data': {
