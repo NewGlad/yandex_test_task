@@ -186,3 +186,52 @@ async def test_patch_wrong_url(test_cli, one_citizen_sample):
     patch_response = await test_cli.patch(f'/imports/{10}/citizens/{2}', json={'name': 'hello'})
     assert patch_response.status == 400
     assert await patch_response.text() == 'Invalid import_id or citizen_id'
+
+
+async def test_patch_non_existing_relative(test_cli, one_citizen_sample):
+    '''
+        Изменение данных гражданина с несуществующим relative_id в списке родственников
+    '''
+    sample_json, import_id = await upload_json_file(one_citizen_sample, test_cli)
+    patch_response = await test_cli.patch(f'/imports/{import_id}/citizens/1',
+        json={
+            'name': 'Hello World',
+            'relatives': [2,3]
+        }
+    )
+
+    assert patch_response.status == 400
+    assert await patch_response.text() == 'Invalid relatives list'
+
+
+async def test_import_non_unique_citizen_id(test_cli, one_citizen_sample):
+    '''
+        Добавление записей с неуникальными citizen_id
+    '''
+    with open(one_citizen_sample) as f:
+        data = json.load(f)
+    data['citizens'].append(data['citizens'][0])
+
+    response = await test_cli.post('/imports', json=data)
+
+    assert response.status == 400
+    assert await response.text() == 'Citizen identifiers invalid'
+
+
+async def test_import_wrong_date_format(test_cli, one_citizen_sample):
+    '''
+        Добавление записей с неправильно отформатированным временем
+    '''
+    with open(one_citizen_sample) as f:
+        data = json.load(f)
+
+    wrong_samples = [
+        '24-02-1996',
+        '29.02.1995', # не високосный год
+        '1 АПР 1865',
+    ]
+
+    for sample in wrong_samples:
+        data['citizens'][0]['birth_date'] = sample
+        response = await test_cli.post('/imports', json=data)
+        assert response.status == 400
