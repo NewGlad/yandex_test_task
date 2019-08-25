@@ -35,6 +35,29 @@
  5. Создать базу данных для приложения и его тестирования ```su -c "./create_db.sh"  postgres```
  6. Убедиться, что тесты приложения завершаются успешно ``` pytest --cov=app -vv ```
 
+
+### Добавление автоматического старта приложения в системе
+
+Для автоматического возобновления работы приложения после перезагрузки виртуальной машины требуется добавить приложение как сервис systemd.
+Требуемые действия:
+
+1. Создать файл ```/lib/systemd/system/yandex_test_task.service``` с содержимым
+```
+[Unit]
+Description=Yandex test task REST service
+After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=ПУТЬ_К_ДИРЕКТОРИИ_С_ПРИЛОЖЕНИЕМ
+ExecStart=/usr/local/bin/pipenv run python ПУТЬ_К_ДИРЕКТОРИИ_С_ПРИЛОЖЕНИЕМ/entry.py
+
+[Install]
+WantedBy=multi-user.target
+```
+2. Обновить конфигурацию systemd: ```systemctl daemon-reload```
+3. Подключить автозапуск приложения: ```systemctl enable yandex_test_task.service```
+
 ## Запуск тестов
 
 Для запуска тестов необходимо выполнить команду 
